@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-// ✅ Define the API response type
+// Define response type
 type SummaryResponse = {
   success: boolean;
   url: string;
@@ -12,18 +12,14 @@ type SummaryResponse = {
 };
 
 export default function Home() {
-  // ✅ State for URL input
   const [url, setUrl] = useState<string>("");
-  // ✅ State for summary data
   const [summaryData, setSummaryData] = useState<SummaryResponse | null>(null);
-  // ✅ State for loading indicator
   const [loading, setLoading] = useState<boolean>(false);
 
-  // ✅ Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!url) {
-      alert("Please enter a blog URL");
+      alert("Please enter a URL");
       return;
     }
 
@@ -35,15 +31,11 @@ export default function Home() {
         body: JSON.stringify({ url }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch summary");
-      }
-
       const data: SummaryResponse = await response.json();
       setSummaryData(data);
     } catch (error) {
-      console.error("Error fetching summary:", error);
-      alert("An error occurred while fetching the summary.");
+      console.error("Fetch error:", error);
+      alert("Failed to fetch summary.");
     } finally {
       setLoading(false);
     }
@@ -54,8 +46,6 @@ export default function Home() {
       <h1 className="text-3xl font-bold text-blue-600 mb-6">
         📝 Blog Summarizer
       </h1>
-
-      {/* URL Input Form */}
       <form
         onSubmit={handleSubmit}
         className="flex gap-2 mb-4 w-full max-w-xl"
@@ -76,7 +66,6 @@ export default function Home() {
         </button>
       </form>
 
-      {/* Display Summary */}
       {summaryData && (
         <div className="w-full max-w-2xl bg-white p-4 rounded shadow">
           <h2 className="text-xl font-semibold mb-2 text-gray-800">
