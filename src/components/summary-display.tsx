@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export default function SummaryDisplay({ data }: { data: any }) {
   if (!data) return null;
 
