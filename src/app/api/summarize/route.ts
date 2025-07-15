@@ -1,72 +1,73 @@
-export const runtime = "nodejs";
-
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 import * as cheerio from "cheerio";
 
-// Simple Urdu translator
+// ✅ Define API response type
+type SummaryResponse = {
+  success: boolean;
+  url: string;
+  summary: string;
+  summaryUrdu: string;
+  length: number;
+};
+
+// ✅ Simple Urdu translator
 function translateToUrdu(text: string): string {
-  const dictionary: Record<string, string> = {
-    'blog': 'بلاگ',
-    'is': 'ہے',
-    'example': 'مثال',
-    'this': 'یہ',
-    'and': 'اور',
-    'for': 'کے لئے',
-    'use': 'استعمال',
-    'you': 'آپ',
-    'can': 'کر سکتے ہیں',
-    'in': 'میں',
-    'documents': 'دستاویزات'
-    // Add more words if needed
+  // Replace with actual translation logic later
+  return text
+    .replace(/Blog/gi, "بلاگ")
+    .replace(/Summary/gi, "خلاصہ")
+    .replace(/English/gi, "انگریزی")
+    .replace(/Urdu/gi, "اردو");
+}
+
+// ✅ API Route: POST /api/summarize
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  const responseData: SummaryResponse = {
+    success: false,
+    url: "",
+    summary: "",
+    summaryUrdu: "",
+    length: 0,
   };
 
-  return text
-    .split(' ')
-    .map(word => dictionary[word.toLowerCase()] || word)
-    .join(' ');
-}
-
-// Blog scraper
-async function scrapeBlogText(url: string): Promise<string> {
-  const response = await axios.get(url);
-  const $ = cheerio.load(response.data);
-  const text = $('p').text();
-  return text.trim() || 'No text found';
-}
-
-// API POST handler
-export async function POST(req: NextRequest) {
   try {
-    const { url } = await req.json();
+    // ✅ Parse JSON body safely
+    const body = await req.json();
+    const inputUrl: unknown = body?.url;
 
-    if (!url || typeof url !== 'string') {
-      return NextResponse.json(
-        { success: false, message: 'URL is required' },
-        { status: 400 }
-      );
+    // ✅ Validate URL
+    if (typeof inputUrl !== "string" || !inputUrl.startsWith("http")) {
+      throw new Error("Invalid URL provided");
     }
 
-    const fullText = await scrapeBlogText(url);
+    responseData.url = inputUrl;
 
-    // Simulate AI summary
-    const summary = fullText.slice(0, 5000) + '... [summary simulated]';
+    // ✅ Fetch and scrape blog content
+    const { data: html } = await axios.get<string>(inputUrl);
+    const $ = cheerio.load(html);
 
-    // Translate to Urdu
+    // Grab text content from <p> tags
+    let fullText = "";
+    $("p").each((_, el) => {
+      fullText += $(el).text() + " ";
+    });
+
+    // ✅ Simulate summary (static logic)
+    const summary = fullText.slice(0, 300) + "... [summary simulated]";
     const summaryUrdu = translateToUrdu(summary);
 
-    return NextResponse.json({
-      success: true,
-      url,
-      summary,
-      summaryUrdu,
-      length: summary.length
-    });
-  } catch (err) {
-    console.error('Error:', err);
-    return NextResponse.json(
-      { success: false, message: 'Internal Server Error' },
-      { status: 500 }
-    );
+    // ✅ Populate response
+    responseData.success = true;
+    responseData.summary = summary;
+    responseData.summaryUrdu = summaryUrdu;
+    responseData.length = fullText.length;
+
+    return NextResponse.json(responseData, { status: 200 });
+  } catch (error: unknown) {
+    console.error("Error in API route:", error);
+    responseData.summary =
+      error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(responseData, { status: 400 });
   }
 }
