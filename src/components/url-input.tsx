@@ -1,30 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import React from "react";
 
-export default function UrlInput({ onSummary }: { onSummary: (data: any) => void }) {
-  const [url, setUrl] = useState("");
+// ✅ Define prop types
+type UrlInputProps = {
+  url: string;
+  setUrl: (url: string) => void;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  loading: boolean;
+};
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url) return alert("Please enter a URL");
-
-    try {
-      const res = await fetch("/api/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-      const data = await res.json();
-      onSummary(data);
-    } catch (err) {
-      console.error("Error fetching summary:", err);
-      alert("Something went wrong! Check the console.");
-    }
-  };
-
+const UrlInput: React.FC<UrlInputProps> = ({
+  url,
+  setUrl,
+  handleSubmit,
+  loading,
+}) => {
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form
+      onSubmit={handleSubmit}
+      className="flex gap-2 mb-4 w-full max-w-xl"
+    >
       <input
         type="text"
         placeholder="Enter blog URL"
@@ -34,10 +30,13 @@ export default function UrlInput({ onSummary }: { onSummary: (data: any) => void
       />
       <button
         type="submit"
-        className="bg-blue-600 text-white px-4 py-2 rounded"
+        disabled={loading}
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
       >
-        Summarize
+        {loading ? "Summarizing..." : "Summarize"}
       </button>
     </form>
   );
-}
+};
+
+export default UrlInput;
