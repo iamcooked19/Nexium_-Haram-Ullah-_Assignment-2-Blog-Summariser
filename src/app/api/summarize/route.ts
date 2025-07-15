@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 import * as cheerio from "cheerio";
 
-// ✅ Define API response type
+// Define response type
 type SummaryResponse = {
   success: boolean;
   url: string;
@@ -21,9 +21,9 @@ function translateToUrdu(text: string): string {
     .replace(/Urdu/gi, "اردو");
 }
 
-// ✅ API Route: POST /api/summarize
+// POST handler
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const responseData: SummaryResponse = {
+  let responseData: SummaryResponse = {
     success: false,
     url: "",
     summary: "",
@@ -32,12 +32,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   };
 
   try {
-    // ✅ Parse JSON body safely
-    const body = await req.json();
-    const inputUrl: unknown = body?.url;
+    const body = (await req.json()) as { url: string };
+    const inputUrl = body.url;
 
-    // ✅ Validate URL
-    if (typeof inputUrl !== "string" || !inputUrl.startsWith("http")) {
+    if (!inputUrl || typeof inputUrl !== "string") {
       throw new Error("Invalid URL provided");
     }
 
@@ -57,15 +55,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const summary = fullText.slice(0, 300) + "... [summary simulated]";
     const summaryUrdu = translateToUrdu(summary);
 
-    // ✅ Populate response
-    responseData.success = true;
-    responseData.summary = summary;
-    responseData.summaryUrdu = summaryUrdu;
-    responseData.length = fullText.length;
+    responseData = {
+      success: true,
+      url: inputUrl,
+      summary,
+      summaryUrdu,
+      length: fullText.length,
+    };
 
     return NextResponse.json(responseData, { status: 200 });
   } catch (error: unknown) {
-    console.error("Error in API route:", error);
+    console.error("Error:", error);
     responseData.summary =
       error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(responseData, { status: 400 });
